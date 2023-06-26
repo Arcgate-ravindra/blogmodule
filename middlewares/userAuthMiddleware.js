@@ -5,7 +5,7 @@ const mongoose  = require('mongoose');
 
 const verifyToken = async (req, res, next) => {
 
-    const authHeader = req.headers["authorization"];
+    const authHeader = req.headers["authorization"] || req.headers["Authorization"] ;
     if (!authHeader) {
         return res.status(400).send({
             message: "Enter the token"
@@ -17,8 +17,10 @@ const verifyToken = async (req, res, next) => {
         const token = authHeader.split(" ")[1];
 
         const user =  jwt.verify(token, process.env.SECRET_KEY);
+      
         if(user){
-            const userInfo = await userModel.findone({_id : new mongoose.Types.ObjectId(user._id)})
+            const userInfo = await userModel.findOne({_id : new mongoose.Types.ObjectId(user.id)})
+
             req.user = userInfo
             next();
         }

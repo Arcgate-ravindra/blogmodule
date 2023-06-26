@@ -6,6 +6,9 @@ const Redis = require("ioredis");
 const client = new Redis();
 require('dotenv').config();
 const emailTransporter = require("../services/emailServices");
+const upload = require('../utils/fileUpload');
+const { date } = require('joi');
+const { default: mongoose } = require('mongoose');
 
 const secret_key = process.env.SECRET_KEY
 
@@ -121,7 +124,9 @@ const resetpassword = async (req, res) => {
 const getALLUser = async (req, res) => {
 
     try {
-
+        const limit = req.query.limit ? parseInt(req.query.limit) : 10;
+        const page = req.query.page ? parseInt(req.query.page) : 1;
+        const skip = (page - 1) * limit;
         const usersData = await userModel.aggregate([
             {
                 $lookup:
@@ -134,6 +139,11 @@ const getALLUser = async (req, res) => {
             },
             {
                 $unwind: "$user-details"
+            },{
+                $limit : limit
+            },
+            {
+                $skip : skip
             },
             {
                 $project: {
@@ -147,7 +157,14 @@ const getALLUser = async (req, res) => {
                 }
             }
         ])
-        return res.send(usersData);
+        const totalData = await userModel.find().countDocuments();
+        const totalPage = Math.ceil(totalData / limit);
+        return res.send({
+            data : usersData,
+            page : page,
+            totalPage : totalPage 
+
+        });
 
     } catch (error) {
 
@@ -217,7 +234,7 @@ const getUser = async (req, res) => {
 const updateuser = async (req, res) => {
 
     try {
-        const { username } = req.params;
+        const { username } = req.params;54
         const updatedUser = await userModel.findOneAndUpdate({ username: username }, {
             $set: req.body,
         }, { new: true }
@@ -239,11 +256,41 @@ const updateuser = async (req, res) => {
 
 }
 
+const fileUplaod = async (req,res) => {
+
+    try {
+
+        await new Promise((resolve, reject) => {
+            upload.single('file')(req, res, (err) => {
+              if (err) {
+                reject(err);
+              } else {
+                if (!req.file) {
+                  reject(new Error('No file uploaded'));
+                } else {
+                  path = `http://localhost:3000/${req.file.path}`;
+                  resolve();
+                }
+              }
+            });
+          });
+        // const user = await userModel.findOne({_id : new mongoose.Types.ObjectId(req.user._id) });
+        // user.profile = path;
+        // await user.save()
+        return res.status(200).send({message : 'File uploaded successfully', path : path});
+
+    } catch (error) {
+        console.log(`error generate while uploading the file ${error.message}`)  
+    }
+   
+   
+}
 
 
 
 
 
-module.exports = { createUser, userlogin, getALLUser, getUser, updateuser, forgetpassword, resetpassword };
+
+module.exports = { createUser, userlogin, getALLUser, getUser, updateuser, forgetpassword, resetpassword, fileUplaod };
 
 
