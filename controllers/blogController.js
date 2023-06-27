@@ -37,7 +37,33 @@ const blogGetAll = async (req, res) => {
         const limit = req.query.limit ? parseInt(req.query.limit) : 10;
         const page = req.query.page ? parseInt(req.query.page) : 1;
         const skip = (page - 1) * limit;
+        const searchQuery = req.query.search;
+        let searchCondition = {};
+        if(searchQuery){
+            const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
+            if(!dateRegex.test(searchQuery)){
+                    return res.status(401).send("pleasee enter the date in this format : yyyy-mm-dd")
+            }
+            const date = new Date(searchQuery);
+            const regexPattern = new RegExp(searchQuery,"i");
+                searchCondition = {
+                    $or : [
+                        {title : regexPattern},
+                        {description : regexPattern},
+                        {
+                            createdAt: {
+                                $gte: new Date(date.getFullYear(), date.getMonth(), date.getDate()),
+                                $lte: new Date(date.getFullYear(), date.getMonth(), date.getDate() + 1)
+                            }
+                        }
+                    ]
+                     
+                }
+        }
             const data = await blogModel.aggregate([
+                {
+                            $match : searchCondition
+                },
                 {
                     $lookup : {
                         from : "users",
@@ -71,7 +97,8 @@ const blogGetAll = async (req, res) => {
         return res.send({
             data : data,
             page : page,
-            totalPage : totalPage
+            totalPage : totalPage,
+            dataPerPage : data?.length,
 
         });
         } catch (error) {

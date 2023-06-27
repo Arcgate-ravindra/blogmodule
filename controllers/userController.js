@@ -10,6 +10,7 @@ const upload = require('../utils/fileUpload');
 const { date } = require('joi');
 const { default: mongoose } = require('mongoose');
 
+
 const secret_key = process.env.SECRET_KEY
 
 const createUser = async (req, res) => {
@@ -87,8 +88,8 @@ const forgetpassword = async (req, res) => {
     if (userExists) {
         const emailSendFun = await emailTransporter();
         console.log(emailSendFun);
-    
-    }else {
+
+    } else {
         return res.status(200).send(
             {
                 message: "user not exists enter the valid email"
@@ -104,7 +105,7 @@ const resetpassword = async (req, res) => {
             message: "please enter the required fields"
         })
     }
-    if (confirmpassword !== newpassword ){
+    if (confirmpassword !== newpassword) {
         return res.status(200).send({
             message: "new password and confirm password are not equal"
         })
@@ -127,7 +128,35 @@ const getALLUser = async (req, res) => {
         const limit = req.query.limit ? parseInt(req.query.limit) : 10;
         const page = req.query.page ? parseInt(req.query.page) : 1;
         const skip = (page - 1) * limit;
+        const searchQuery = req.query.search;
+        let searchCondition = {};
+        if (searchQuery) {
+            const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
+            if(!dateRegex.test(searchQuery)){
+                    return res.status(401).send("pleasee enter the date in this format : yyyy-mm-dd")
+            }
+            const date = new Date(searchQuery);
+            const regexPattern = new RegExp(searchQuery, 'i');
+            searchCondition = {
+                $or: [
+                    { first_name: regexPattern },
+                    { last_name: regexPattern },
+                    { email: regexPattern },
+                    { phone: regexPattern },
+                    {
+                        createdAt: {
+                            $gte: new Date(date.getFullYear(), date.getMonth(), date.getDate()),
+                            $lte: new Date(date.getFullYear(), date.getMonth(), date.getDate() + 1)
+                        }
+                    }
+
+                ]
+            }
+        }
         const usersData = await userModel.aggregate([
+            {
+                $match: searchCondition
+            },
             {
                 $lookup:
                 {
@@ -139,11 +168,12 @@ const getALLUser = async (req, res) => {
             },
             {
                 $unwind: "$user-details"
-            },{
-                $limit : limit
+            }, 
+            {
+                $skip: skip
             },
             {
-                $skip : skip
+                $limit: limit
             },
             {
                 $project: {
@@ -153,6 +183,7 @@ const getALLUser = async (req, res) => {
                     phone: 1,
                     email: 1,
                     profile: 1,
+                    createdAt : 1,
                     user_details: "$user-details",
                 }
             }
@@ -160,9 +191,10 @@ const getALLUser = async (req, res) => {
         const totalData = await userModel.find().countDocuments();
         const totalPage = Math.ceil(totalData / limit);
         return res.send({
-            data : usersData,
-            page : page,
-            totalPage : totalPage 
+            data: usersData,
+            page: page,
+            totalPage: totalPage,
+            dataPerPage : usersData?.length,
 
         });
 
@@ -234,7 +266,7 @@ const getUser = async (req, res) => {
 const updateuser = async (req, res) => {
 
     try {
-        const { username } = req.params;54
+        const { username } = req.params; 54
         const updatedUser = await userModel.findOneAndUpdate({ username: username }, {
             $set: req.body,
         }, { new: true }
@@ -256,34 +288,34 @@ const updateuser = async (req, res) => {
 
 }
 
-const fileUplaod = async (req,res) => {
+const fileUplaod = async (req, res) => {
 
     try {
 
         await new Promise((resolve, reject) => {
             upload.single('file')(req, res, (err) => {
-              if (err) {
-                reject(err);
-              } else {
-                if (!req.file) {
-                  reject(new Error('No file uploaded'));
+                if (err) {
+                    reject(err);
                 } else {
-                  path = `http://localhost:3000/${req.file.path}`;
-                  resolve();
+                    if (!req.file) {
+                        reject(new Error('No file uploaded'));
+                    } else {
+                        path = `http://localhost:3000/${req.file.path}`;
+                        resolve();
+                    }
                 }
-              }
             });
-          });
+        });
         // const user = await userModel.findOne({_id : new mongoose.Types.ObjectId(req.user._id) });
         // user.profile = path;
         // await user.save()
-        return res.status(200).send({message : 'File uploaded successfully', path : path});
+        return res.status(200).send({ message: 'File uploaded successfully', path: path });
 
     } catch (error) {
-        console.log(`error generate while uploading the file ${error.message}`)  
+        console.log(`error generate while uploading the file ${error.message}`)
     }
-   
-   
+
+
 }
 
 
