@@ -10,6 +10,7 @@ const userSchema = new mongoose.Schema(
         phone: { type: String, required: true },
         profile: { type: String, required: true },
         role: { type: String, default: "user" },
+        logged_in : {type : String}
     }, { timestamps: true }
 )
 

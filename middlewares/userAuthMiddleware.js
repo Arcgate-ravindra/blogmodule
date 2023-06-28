@@ -26,7 +26,7 @@ const verifyToken = async (req, res, next) => {
         }
     }else{
         return res.status(400).send({
-            message: "you are not authenticate"
+            message: "token expired"
         })
     }
 
@@ -34,4 +34,32 @@ const verifyToken = async (req, res, next) => {
 
 }
 
-module.exports = verifyToken;
+const logoutChk = (req,res,next) => {
+    if(req.user.logged_in === "false"){
+        return res.status(400).send("please login for accessing this api")
+    }else{
+        next();
+    }
+}
+
+const adminAccess = (req,res,next) => {
+    if(req.user.role !== "admin"){
+        return res.status(200).send("you are not an admin");
+    }else{
+        next();
+    }
+}
+
+const userAccess = (req,res,next) => {
+    if(req.user.role === "user")
+    {
+        next();
+      
+    }else if(req.user.role === "admin"){
+        next();
+    }else{
+              return res.status(200).send("you are not allowed to do that");
+    }
+}
+
+module.exports = {verifyToken,adminAccess,userAccess,logoutChk};

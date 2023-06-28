@@ -76,10 +76,13 @@ const blogGetAll = async (req, res) => {
                     $unwind : "$blog-details"
                 },
                 {
+                    $skip : skip
+            },
+                {
                         $limit : limit
                 },
                 {
-                        $skip : skip
+                    $sort : {createdAt : -1}
                 },
                 {
                     $project : {

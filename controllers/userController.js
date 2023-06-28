@@ -12,6 +12,8 @@ const { default: mongoose } = require('mongoose');
 
 
 const secret_key = process.env.SECRET_KEY
+const refresh_key = process.env.REFRESH_KEY
+
 
 const createUser = async (req, res) => {
 
@@ -62,10 +64,14 @@ const userlogin = async (req, res) => {
                 message: "Wrong password",
             })
         }
-        const token = jwt.sign({ id: userExists._id }, secret_key, { expiresIn: "24h" });
+        userExists.logged_in  = true;
+        await userExists.save();
+        const accessToken = jwt.sign({ id: userExists._id }, secret_key, { expiresIn: "24h" });
+        const refreshToken = jwt.sign({ id: userExists._id }, refresh_key, { expiresIn: "1y" });
         return res.status(200).send(
             {
-                message: token
+                accessToken: accessToken,
+                refreshToken : refreshToken
             }
         );
 
@@ -75,6 +81,35 @@ const userlogin = async (req, res) => {
     }
 
 
+}
+
+const generateToken = async (req,res) => {
+
+    try {
+        const {token} = req.body;
+    if(!token){
+        return res.status(400).send("please enter the token");
+    }
+    const decodedToken = jwt.verify(token,refresh_key, (err,result) => {
+        if(err){
+            console.log(err);
+        }else{
+            return result;
+        }
+    }); 
+    const accessToken = jwt.sign({ id: decodedToken.id }, secret_key, { expiresIn: "24h" });
+    const refreshToken = jwt.sign({ id: decodedToken.id }, refresh_key, { expiresIn: "1y" });
+    return res.status(200).send(
+        {
+            accessToken: accessToken,
+            refreshToken : refreshToken
+        }
+    );
+
+    } catch (error) {
+        console.log(`error generate while getting the new access and refresh token ${error.message}`)
+    }
+    
 }
 
 const forgetpassword = async (req, res) => {
@@ -120,6 +155,15 @@ const resetpassword = async (req, res) => {
         })
     }
 
+}
+
+const logout = async (req,res) => {
+        await userModel.findOneAndUpdate({_id : new mongoose.Types.ObjectId(req.user.id)}, {
+            $set : {
+                logged_in : false
+            }
+        })
+        return res.status(200).send("user logout successfully")
 }
 
 const getALLUser = async (req, res) => {
@@ -174,6 +218,9 @@ const getALLUser = async (req, res) => {
             },
             {
                 $limit: limit
+            },
+            {
+                $sort : {createdAt : -1}
             },
             {
                 $project: {
@@ -323,6 +370,6 @@ const fileUplaod = async (req, res) => {
 
 
 
-module.exports = { createUser, userlogin, getALLUser, getUser, updateuser, forgetpassword, resetpassword, fileUplaod };
+module.exports = { createUser, userlogin, getALLUser, getUser, updateuser, forgetpassword, resetpassword, fileUplaod, generateToken, logout };
 
 
