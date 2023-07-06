@@ -6,7 +6,7 @@ const blogCreate = async (req, res) => {
 
     try {
         const data = await blogModel.create(req.body);
-        return res.status(200).send({
+        return res.status(201).send({
             message: "blog create successfully",
             data: data
         })
@@ -97,7 +97,7 @@ const blogGetAll = async (req, res) => {
             ])
             const totalData = await blogModel.find().countDocuments();
         const totalPage = Math.ceil(totalData / limit);
-        return res.send({
+        return res.status(200).send({
             data : data,
             page : page,
             totalPage : totalPage,

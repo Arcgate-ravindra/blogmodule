@@ -21,7 +21,7 @@ const createUser = async (req, res) => {
         const { username, first_name, last_name, email, password, phone, profile } = req.body;
         const userexist = await userModel.findOne({ email: email });
         if (userexist) {
-            return res.status(200).send({
+            return res.status(400).send({
                 message: "User already exists go and login",
             })
         }
@@ -38,7 +38,8 @@ const createUser = async (req, res) => {
             profile: profile,
         })
         await user.save();
-        return res.status(200).send({
+        return res.status(201).send({
+            data : user,
             message: "user created successfully"
         })
     } catch (error) {
@@ -54,13 +55,13 @@ const userlogin = async (req, res) => {
         const { email, password } = req.body;
         const userExists = await userModel.findOne({ email: email });
         if (!userExists) {
-            return res.status(400).send({
+            return res.status(404).send({
                 message: "User not exists...enter correct email or register yourself first"
             })
         }
         const isMatch = bcrypt.compareSync(password, userExists['password']);
         if (!isMatch) {
-            return res.status(400).send({
+            return res.status(404).send({
                 message: "Wrong password",
             })
         }
@@ -115,7 +116,7 @@ const generateToken = async (req,res) => {
 const forgetpassword = async (req, res) => {
     const { email } = req.body;
     if (!email) {
-        return res.status(401).send({
+        return res.status(400).send({
             message: "please enter the email"
         })
     }
@@ -123,9 +124,12 @@ const forgetpassword = async (req, res) => {
     if (userExists) {
         const emailSendFun = await emailTransporter();
         console.log(emailSendFun);
+        return res.status(200).send({
+            message : "please check your email"
+        })
 
     } else {
-        return res.status(200).send(
+        return res.status(404).send(
             {
                 message: "user not exists enter the valid email"
             }
@@ -136,12 +140,12 @@ const forgetpassword = async (req, res) => {
 const resetpassword = async (req, res) => {
     const { email, newpassword, confirmpassword } = req.body;
     if (!email && !newpassword && !confirmpassword) {
-        return res.status(401).send({
+        return res.status(400).send({
             message: "please enter the required fields"
         })
     }
     if (confirmpassword !== newpassword) {
-        return res.status(200).send({
+        return res.status(400).send({
             message: "new password and confirm password are not equal"
         })
     } else {
@@ -237,7 +241,7 @@ const getALLUser = async (req, res) => {
         ])
         const totalData = await userModel.find().countDocuments();
         const totalPage = Math.ceil(totalData / limit);
-        return res.send({
+        return res.status(200).send({
             data: usersData,
             page: page,
             totalPage: totalPage,
@@ -255,12 +259,16 @@ const getALLUser = async (req, res) => {
 const getUser = async (req, res) => {
 
     try {
-        const { username } = req.params;
-        const userRedisData = await client.hgetall(username);
-        if (Object.keys(userRedisData).length !== 0) {
-            console.log("data comes from redis server");
-            return res.send(userRedisData);
-        } else {
+        const { username} = req.params;
+
+        if(!username || username === 'null' || username === 'undefined'){
+                return res.status(400).send("enter the username or username is not valid");
+        }
+        //const userRedisData = await client.hgetall(username);
+        // if (Object.keys(userRedisData).length !== 0) {
+        //     console.log("data comes from redis server");
+        //     return res.send(userRedisData);
+        // } else {
             const user = await userModel.aggregate([
                 {
                     $match: { username: username }
@@ -292,15 +300,15 @@ const getUser = async (req, res) => {
                     }
                 }
             ])
-            const redisData = {};
-            user.forEach(async element => {
-                for (let key in element) {
-                    redisData[key] = element[key];
-                }
-            });
-            await client.hset(username, redisData)
+            // const redisData = {};
+            // user.forEach(async element => {
+            //     for (let key in element) {
+            //         redisData[key] = element[key];
+            //     }
+            // });
+            // await client.hset(username, redisData)
             return res.send(user);
-        }
+      //  }
 
     } catch (error) {
 
@@ -313,26 +321,38 @@ const getUser = async (req, res) => {
 const updateuser = async (req, res) => {
 
     try {
-        const { username } = req.params; 54
+        const { username } = req.params;
+        if(!username || username === 'null' || username === 'undefined'){
+            return res.status(400).send("enter the username or username is not valid");
+    }
         const updatedUser = await userModel.findOneAndUpdate({ username: username }, {
             $set: req.body,
         }, { new: true }
         )
-        const redisUser = await client.hgetall(username);
-        for (let key in updatedUser) {
-            if (redisUser.hasOwnProperty(key) && redisUser[key] !== updatedUser[key]) {
-                redisUser[key] = updatedUser[key]
-            }
-        }
+        // const redisUser = await client.hgetall(username);
+        // for (let key in updatedUser) {
+        //     if (redisUser.hasOwnProperty(key) && redisUser[key] !== updatedUser[key]) {
+        //         redisUser[key] = updatedUser[key]
+        //     }
+        // }
 
-        await client.hset(username, redisUser);
-        return res.send(updatedUser);
+        // await client.hset(username, redisUser);
+        return res.status(201).send(updatedUser);
     } catch (error) {
 
         console.log(`error generate while updating the user ${error.message}`)
 
     }
 
+}
+
+const delUser = async (req,res) => {
+            let {id} = req.params;
+            if(!ObjectId. isValid(id)){
+                return res.status(400).send("the id you have entered is not the valid object id")
+            }
+            await userModel.findByIdAndDelete(id); 
+            return res.status(200).send("user deleted successfully!")
 }
 
 const fileUplaod = async (req, res) => {
@@ -370,6 +390,6 @@ const fileUplaod = async (req, res) => {
 
 
 
-module.exports = { createUser, userlogin, getALLUser, getUser, updateuser, forgetpassword, resetpassword, fileUplaod, generateToken, logout };
+module.exports = { createUser, userlogin, getALLUser, getUser, updateuser, delUser,forgetpassword, resetpassword, fileUplaod, generateToken, logout };
 
 

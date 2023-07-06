@@ -1,4 +1,4 @@
-const {createUser, userlogin, getALLUser, getUser, updateuser, forgetpassword, resetpassword, fileUplaod, generateToken, logout} = require('../controllers/userController');
+const {createUser, userlogin, getALLUser, getUser, updateuser, delUser,forgetpassword, resetpassword, fileUplaod, generateToken, logout} = require('../controllers/userController');
 const router = require('express').Router();
 const validateRegData = require('../middlewares/regSchema');
 const validateloginData = require('../middlewares/loginSchema')
@@ -13,6 +13,7 @@ router.post("/forgotpass", forgetpassword);
 router.post("/resetpass",resetpassword);
 router.post("/upload", verifyToken,userAccess,fileUplaod);
 router.post("/generatetoken", generateToken)
-router.delete("/logout", verifyToken, userAccess, logout)
+router.delete("/logout", verifyToken, userAccess, logout);
+router.delete("/delete/:id", verifyToken, logoutChk, adminAccess, delUser)
 
 module.exports = router;

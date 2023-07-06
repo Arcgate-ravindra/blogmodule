@@ -5,33 +5,34 @@ const mongoose  = require('mongoose');
 
 const verifyToken = async (req, res, next) => {
 
-    const authHeader = req.headers["authorization"] || req.headers["Authorization"] ;
-    if (!authHeader) {
-        return res.status(400).send({
-            message: "Enter the token"
-        })
-    }
-
-    if (authHeader) {
-
-        const token = authHeader.split(" ")[1];
-
-        const user =  jwt.verify(token, process.env.SECRET_KEY);
-      
-        if(user){
-            const userInfo = await userModel.findOne({_id : new mongoose.Types.ObjectId(user.id)})
-
-            req.user = userInfo
-            next();
+    try {
+        const authHeader = req.headers["authorization"] || req.headers["Authorization"] ;
+        if (!authHeader) {
+            return res.status(400).send({
+                message: "Enter the token"
+            })
         }
-    }else{
-        return res.status(400).send({
-            message: "token expired"
-        })
+
+        if (authHeader) {
+    
+            const token = authHeader.split(" ")[1];
+    
+            jwt.verify(token, process.env.SECRET_KEY, async (err,result) => {
+                if(err)
+                {
+                    return res.status(401).send("token expired");
+                }else{
+                    const userInfo = await userModel.findOne({_id : new mongoose.Types.ObjectId(result.id)})
+                    req.user = userInfo
+                    next();
+                }
+            })  
+        }       
+    } catch (error) {
+            console.log(`Error while verifying the token ${error.message}`);
     }
 
-
-
+   
 }
 
 const logoutChk = (req,res,next) => {
@@ -44,7 +45,7 @@ const logoutChk = (req,res,next) => {
 
 const adminAccess = (req,res,next) => {
     if(req.user.role !== "admin"){
-        return res.status(200).send("you are not an admin");
+        return res.status(400).send("you are not an admin");
     }else{
         next();
     }
@@ -62,4 +63,4 @@ const userAccess = (req,res,next) => {
     }
 }
 
-module.exports = {verifyToken,adminAccess,userAccess,logoutChk};
+module.exports = {verifyToken,adminAccess,userAccess,logoutChk}

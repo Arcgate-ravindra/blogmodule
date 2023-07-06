@@ -1,8 +1,15 @@
 const mongoose  =  require("mongoose");
 require('dotenv').config();
-const url = process.env.MONGODB_URL
+const urlProd = process.env.MONGODB_URL;
+const urlTest = process.env.TEST_URL;
+
 const dbConnection = () => {
-    mongoose.connect(url);
+    if(process.env.NODE_ENV === "test"){
+        mongoose.connect(urlTest);
+    }else{
+        mongoose.connect(urlProd);
+    }
+ 
     const db = mongoose.connection;
     db.on('connected', function(){
         console.log("db is connected")
@@ -13,5 +20,6 @@ const dbConnection = () => {
 
 
 }
+
 
 module.exports = dbConnection;

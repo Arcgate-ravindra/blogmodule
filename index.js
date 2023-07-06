@@ -1,7 +1,7 @@
 const express = require('express');
 const app = express();
 require('dotenv').config();
-const connection  = require('./config/db.config');
+const dbConnection  = require('./config/db.config');
 const userRouter = require("./routes/userRoute");
 const addressRouter = require('./routes/addressRoute');
 const blogRouter = require('./routes/blogRoute');
@@ -9,9 +9,7 @@ const path = require('path');
 
 
 // datbbase connection
-connection();
-
-
+dbConnection();
 
 //middleware
 app.use(express.json());
@@ -31,6 +29,6 @@ app.use('/api/blog', blogRouter);
 const Port = process.env.PORT || 4000
 
 //server
-app.listen(3000, () => {
+ module.exports = app.listen(3000, () => {
     console.log(`Server is listening on the port :- ${Port}`)
 })

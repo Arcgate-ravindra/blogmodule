@@ -8,7 +8,7 @@ router.post("/create",verifyToken, logoutChk,userAccess,validateBlog,blogCreate)
 router.get("/getall",verifyToken, logoutChk,userAccess,blogGetAll);
 router.get("/get/:id", verifyToken, logoutChk,userAccess,blogget);
 router.patch("/update/:id", verifyToken, logoutChk,userAccess,blogUpdate);
-router.patch("/delete/:id",verifyToken, logoutChk,userAccess,blogdelete);
+router.delete("/delete/:id",verifyToken, logoutChk,userAccess,blogdelete);
 
 
 module.exports = router; 

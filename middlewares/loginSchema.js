@@ -9,8 +9,9 @@ const loginSchema = joi.object({
 const validateLoginSchema = (req,res,next) => {
     const {error} = loginSchema.validate(req.body);
     if(error){
-        return res.status(400).send({
+        return res.status(404).send({
             error : error.details[0].message
+          
         })
     }else{
         next();
