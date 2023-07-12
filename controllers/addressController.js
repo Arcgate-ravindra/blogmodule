@@ -1,6 +1,7 @@
 const addressModel = require('../models/addressModel');
 const Redis = require("ioredis");
 const client = new Redis();
+const mongoose = require('mongoose');
 
 
 const createAddress = async(req, res) => {
@@ -17,7 +18,7 @@ const updateaddress = async (req, res) => {
         $set: req.body,
     }, { new: true }
     )
-    const redisUser = await client.hgetall(username);
+   const redisUser = await client.hgetall(username);
     const address= updatedaddress?.address;
     for(let key in address){
             if(redisUser.hasOwnProperty(key) && redisUser[key] !== address[key])

@@ -9,6 +9,8 @@ const emailTransporter = require("../services/emailServices");
 const upload = require('../utils/fileUpload');
 const { date } = require('joi');
 const { default: mongoose } = require('mongoose');
+const addressModel = require('../models/addressModel');
+const  ObjectID = require('mongodb').ObjectId;
 
 
 const secret_key = process.env.SECRET_KEY
@@ -264,11 +266,11 @@ const getUser = async (req, res) => {
         if(!username || username === 'null' || username === 'undefined'){
                 return res.status(400).send("enter the username or username is not valid");
         }
-        //const userRedisData = await client.hgetall(username);
-        // if (Object.keys(userRedisData).length !== 0) {
-        //     console.log("data comes from redis server");
-        //     return res.send(userRedisData);
-        // } else {
+        const userRedisData = await client.hgetall(username);
+        if (Object.keys(userRedisData).length !== 0) {
+            console.log("data comes from redis server");
+            return res.status(200).send({message : "data fetch from redis" , data : userRedisData});
+        } else {
             const user = await userModel.aggregate([
                 {
                     $match: { username: username }
@@ -300,15 +302,15 @@ const getUser = async (req, res) => {
                     }
                 }
             ])
-            // const redisData = {};
-            // user.forEach(async element => {
-            //     for (let key in element) {
-            //         redisData[key] = element[key];
-            //     }
-            // });
-            // await client.hset(username, redisData)
-            return res.send(user);
-      //  }
+            const redisData = {};
+            user.forEach(async element => {
+                for (let key in element) {
+                    redisData[key] = element[key];
+                }
+            });
+            await client.hset(username, redisData)
+            return res.status(200).send({data : user});
+        }
 
     } catch (error) {
 
@@ -329,14 +331,14 @@ const updateuser = async (req, res) => {
             $set: req.body,
         }, { new: true }
         )
-        // const redisUser = await client.hgetall(username);
-        // for (let key in updatedUser) {
-        //     if (redisUser.hasOwnProperty(key) && redisUser[key] !== updatedUser[key]) {
-        //         redisUser[key] = updatedUser[key]
-        //     }
-        // }
+        const redisUser = await client.hgetall(username);
+        for (let key in updatedUser) {
+            if (redisUser.hasOwnProperty(key) && redisUser[key] !== updatedUser[key]) {
+                redisUser[key] = updatedUser[key]
+            }
+        }
 
-        // await client.hset(username, redisUser);
+        await client.hset(username, redisUser);
         return res.status(201).send(updatedUser);
     } catch (error) {
 
@@ -348,10 +350,13 @@ const updateuser = async (req, res) => {
 
 const delUser = async (req,res) => {
             let {id} = req.params;
-            if(!ObjectId. isValid(id)){
+            let {username} = req.query;
+            if(!ObjectID.isValid(id)){
                 return res.status(400).send("the id you have entered is not the valid object id")
             }
-            await userModel.findByIdAndDelete(id); 
+            await userModel.findByIdAndDelete(id);
+            await addressModel.deleteOne({user_id : id});
+            await client.del(username);
             return res.status(200).send("user deleted successfully!")
 }
 
@@ -373,6 +378,8 @@ const fileUplaod = async (req, res) => {
                 }
             });
         });
+
+        //extra code
         // const user = await userModel.findOne({_id : new mongoose.Types.ObjectId(req.user._id) });
         // user.profile = path;
         // await user.save()

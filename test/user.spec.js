@@ -23,8 +23,6 @@ let user_id;
 let id;
 
 describe("------Tasks API---------", () => {
- 
-
   describe("post-api", () => {
     before(async () => {
       await userModel.deleteMany();
@@ -33,16 +31,14 @@ describe("------Tasks API---------", () => {
     before(async () => {
       await blogModel.deleteMany();
     });
-   
+
     it("api should submit the following data", (done) => {
-    
-     
       chai
         .request(server)
         .post("/api/user/registration")
         .send(userData)
         .end((error, response) => {
-          user_id = response.body.data._id
+          user_id = response.body.data._id;
           expect(response.status).to.be.equal(201);
           expect(response.body.message).to.be.equal(
             "user created successfully"
@@ -68,7 +64,6 @@ describe("------Tasks API---------", () => {
     });
 
     it("api should not submit the data and throw the error 'User already exists go and login'", () => {
-
       chai
         .request(server)
         .post("/api/user/registration")
@@ -137,81 +132,82 @@ describe("------Tasks API---------", () => {
       chai
         .request(server)
         .get("/api/user/getall")
-        .set('Authorization', `Bearer ${token}`)
+        .set("Authorization", `Bearer ${token}`)
         .end((err, response) => {
           expect(response.status).to.be.equal(400);
-         expect(response.text).to.be.equal("you are not an admin")
+          expect(response.text).to.be.equal("you are not an admin");
           done();
         });
     }).timeout(100000);
 
     it("Get user api", (done) => {
-      let username = "khushi"
+      let username = "khushi";
       chai
         .request(server)
         .get("/api/user/" + username)
-        .set('Authorization', `Bearer ${token}`)
+        .set("Authorization", `Bearer ${token}`)
         .end((err, response) => {
           expect(response.status).to.be.equal(200);
-         // expect(response.body.message).to.be.equal("new password and confirm password are not equal")
+          // expect(response.body.message).to.be.equal("new password and confirm password are not equal")
           done();
         });
     }).timeout(100000);
 
     it("Get user api when username is not send or enter the invalid username", (done) => {
-      let username = undefined
+      let username = undefined;
       chai
         .request(server)
         .get("/api/user/" + username)
-        .set('Authorization', `Bearer ${token}`)
+        .set("Authorization", `Bearer ${token}`)
         .end((err, response) => {
           expect(response.status).to.be.equal(400);
-         expect(response.text).to.be.equal("enter the username or username is not valid")
+          expect(response.text).to.be.equal(
+            "enter the username or username is not valid"
+          );
           done();
         });
     }).timeout(100000);
 
     it("Update the userdata using username", (done) => {
-      let username = "khushi"
+      let username = "khushi";
       chai
         .request(server)
         .patch("/api/user/" + username)
-        .set('Authorization', `Bearer ${token}`)
-        .send({phone : "4566544567"})
+        .set("Authorization", `Bearer ${token}`)
+        .send({ phone: "4566544567" })
         .end((err, response) => {
           expect(response.status).to.be.equal(201);
           done();
         });
     }).timeout(100000);
 
-
     it("Update the userdata using invalid username", (done) => {
-      let username = undefined
+      let username = undefined;
       chai
         .request(server)
         .patch("/api/user/" + username)
-        .set('Authorization', `Bearer ${token}`)
-        .send({phone : "4566544567"})
+        .set("Authorization", `Bearer ${token}`)
+        .send({ phone: "4566544567" })
         .end((err, response) => {
           expect(response.status).to.be.equal(400);
           done();
         });
     }).timeout(100000);
 
-
     it("blog post api", (done) => {
       chai
         .request(server)
         .post("/api/blog/create")
-        .set('Authorization', `Bearer ${token}`)
+        .set("Authorization", `Bearer ${token}`)
         .send({
-          "title" : "this is my blog",
-          "image" : "https://images.unsplash.com/photo-1503023345310-bd7c1de61c7d?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8Mnx8aHVtYW58ZW58MHx8MHx8fDA%3D&auto=format&fit=crop&w=500&q=60",
-          "description" : "a standing person",
-          "created_by" : user_id
+          title: "this is my blog",
+          image:
+            "https://images.unsplash.com/photo-1503023345310-bd7c1de61c7d?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8Mnx8aHVtYW58ZW58MHx8MHx8fDA%3D&auto=format&fit=crop&w=500&q=60",
+          description: "a standing person",
+          created_by: user_id,
         })
         .end((err, response) => {
-          id = response.body.data._id
+          id = response.body.data._id;
           expect(response.status).to.be.equal(201);
           done();
         });
@@ -221,19 +217,18 @@ describe("------Tasks API---------", () => {
       chai
         .request(server)
         .get("/api/blog/getall")
-        .set('Authorization', `Bearer ${token}`)
+        .set("Authorization", `Bearer ${token}`)
         .end((err, response) => {
           expect(response.status).to.be.equal(200);
           done();
         });
     }).timeout(100000);
 
-
     it("get single blog", (done) => {
       chai
         .request(server)
         .get("/api/blog/get/" + id)
-        .set('Authorization', `Bearer ${token}`)
+        .set("Authorization", `Bearer ${token}`)
         .end((err, response) => {
           expect(response.status).to.be.equal(200);
           done();
@@ -244,20 +239,19 @@ describe("------Tasks API---------", () => {
       chai
         .request(server)
         .patch("/api/blog/update/" + id)
-        .set('Authorization', `Bearer ${token}`)
-        .send({title : "update the title of the blog"})
+        .set("Authorization", `Bearer ${token}`)
+        .send({ title: "update the title of the blog" })
         .end((err, response) => {
           expect(response.status).to.be.equal(200);
           done();
         });
     }).timeout(100000);
 
-
     it("delete the blog", (done) => {
       chai
         .request(server)
         .delete("/api/blog/delete/" + id)
-        .set('Authorization', `Bearer ${token}`)
+        .set("Authorization", `Bearer ${token}`)
         .end((err, response) => {
           expect(response.status).to.be.equal(200);
           done();
@@ -293,13 +287,13 @@ describe("------Tasks API---------", () => {
       chai
         .request(server)
         .post("/api/user/forgotpass")
-        .send({email : "khus.vijay@gmail.com"})
+        .send({ email: "khus.vijay@gmail.com" })
         .end((err, response) => {
           expect(response.status).to.be.equal(200);
-          expect(response.body.message).to.be.equal("please check your email")
+          expect(response.body.message).to.be.equal("please check your email");
           done();
         });
-    }).timeout(10000);;
+    }).timeout(10000);
 
     it("forget password api when user not send the email", (done) => {
       chai
@@ -308,19 +302,21 @@ describe("------Tasks API---------", () => {
         .send()
         .end((err, response) => {
           expect(response.status).to.be.equal(400);
-          expect(response.body.message).to.be.equal("please enter the email")
+          expect(response.body.message).to.be.equal("please enter the email");
           done();
         });
     });
 
-       it("forget password api when user send the email which is not exists in the database", (done) => {
+    it("forget password api when user send the email which is not exists in the database", (done) => {
       chai
         .request(server)
         .post("/api/user/forgotpass")
-        .send({email : "rav.dabi@gmail.com"})
+        .send({ email: "rav.dabi@gmail.com" })
         .end((err, response) => {
           expect(response.status).to.be.equal(404);
-          expect(response.body.message).to.be.equal("user not exists enter the valid email")
+          expect(response.body.message).to.be.equal(
+            "user not exists enter the valid email"
+          );
           done();
         });
     });
@@ -329,10 +325,16 @@ describe("------Tasks API---------", () => {
       chai
         .request(server)
         .post("/api/user/resetpass")
-        .send({email : "khus.vijay@gmail.com", newpassword : "123", confirmpassword : "123"})
+        .send({
+          email: "khus.vijay@gmail.com",
+          newpassword: "123",
+          confirmpassword: "123",
+        })
         .end((err, response) => {
           expect(response.status).to.be.equal(200);
-          expect(response.body.message).to.be.equal("password reset successfully")
+          expect(response.body.message).to.be.equal(
+            "password reset successfully"
+          );
           done();
         });
     });
@@ -344,7 +346,9 @@ describe("------Tasks API---------", () => {
         .send()
         .end((err, response) => {
           expect(response.status).to.be.equal(400);
-          expect(response.body.message).to.be.equal("please enter the required fields")
+          expect(response.body.message).to.be.equal(
+            "please enter the required fields"
+          );
           done();
         });
     });
@@ -353,16 +357,19 @@ describe("------Tasks API---------", () => {
       chai
         .request(server)
         .post("/api/user/resetpass")
-        .send({email : "khus.vijay@gmail.com", newpassword : "123", confirmpassword : "321"})
+        .send({
+          email: "khus.vijay@gmail.com",
+          newpassword: "123",
+          confirmpassword: "321",
+        })
         .end((err, response) => {
           expect(response.status).to.be.equal(400);
-          expect(response.body.message).to.be.equal("new password and confirm password are not equal")
+          expect(response.body.message).to.be.equal(
+            "new password and confirm password are not equal"
+          );
           done();
         });
     });
-
-
-
   });
 });
 

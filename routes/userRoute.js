@@ -4,6 +4,8 @@ const validateRegData = require('../middlewares/regSchema');
 const validateloginData = require('../middlewares/loginSchema')
 const {verifyToken,adminAccess,userAccess,logoutChk} = require("../middlewares/userAuthMiddleware");
 
+
+
 router.post("/registration", validateRegData, createUser);
 router.post("/userlogin", validateloginData, userlogin)
 router.get("/getall", verifyToken,logoutChk, adminAccess,getALLUser);
@@ -14,6 +16,7 @@ router.post("/resetpass",resetpassword);
 router.post("/upload", verifyToken,userAccess,fileUplaod);
 router.post("/generatetoken", generateToken)
 router.delete("/logout", verifyToken, userAccess, logout);
-router.delete("/delete/:id", verifyToken, logoutChk, adminAccess, delUser)
+router.delete("/delete/:id", verifyToken, logoutChk, userAccess, delUser)
+
 
 module.exports = router;

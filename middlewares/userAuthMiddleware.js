@@ -36,7 +36,7 @@ const verifyToken = async (req, res, next) => {
 }
 
 const logoutChk = (req,res,next) => {
-    if(req.user.logged_in === "false"){
+    if(req.user.logged_in === false){
         return res.status(400).send("please login for accessing this api")
     }else{
         next();
@@ -47,6 +47,7 @@ const adminAccess = (req,res,next) => {
     if(req.user.role !== "admin"){
         return res.status(400).send("you are not an admin");
     }else{
+      
         next();
     }
 }
