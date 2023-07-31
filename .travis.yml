@@ -1,0 +1,10 @@
+language: node_js
+node_js:
+  - "18"  # Add other versions if needed
+cache:
+  directories:
+    - node_modules
+install:
+  - npm install
+script:
+  - npm start
